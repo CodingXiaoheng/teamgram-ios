@@ -222,7 +222,13 @@ public final class AuthorizationSequenceSplashController: ViewController {
             strongSelf.startButton.alpha = 0.6
             let accountManager = strongSelf.accountManager
             
-            strongSelf.activateLocalizationDisposable.set(TelegramEngineUnauthorized(account: strongSelf.account).localization.downloadAndApplyLocalization(accountManager: accountManager, languageCode: code).start(completed: {
+            strongSelf.activateLocalizationDisposable.set(TelegramEngineUnauthorized(account: strongSelf.account).localization.downloadAndApplyLocalization(accountManager: accountManager, languageCode: code).start(error: { [weak self] _ in
+                Queue.mainQueue().async {
+                    self?.controller.isEnabled = true
+                    self?.startButton.alpha = 1.0
+                    self?.pressNext(strings: nil)
+                }
+            }, completed: {
                 let _ = (accountManager.transaction { transaction -> PresentationStrings? in
                     let localizationSettings: LocalizationSettings?
                     if let current = transaction.getSharedData(SharedDataKeys.localizationSettings)?.get(LocalizationSettings.self) {
@@ -248,8 +254,6 @@ public final class AuthorizationSequenceSplashController: ViewController {
     }
     
     private func pressNext(strings: PresentationStrings?) {
-        if let navigationController = self.navigationController, navigationController.viewControllers.last === self {
-            self.nextPressed?(strings)
-        }
+        self.nextPressed?(strings)
     }
 }

@@ -37,3 +37,13 @@ common:index_build --noannounce_rc
 common:index_build --noshow_timestamps
 common:index_build --curses=no
 common:index_build --color=no
+build --copt=-Wno-thread-safety-analysis
+build --cxxopt=-Wno-thread-safety-analysis
+build --copt=-Wno-thread-safety
+build --cxxopt=-Wno-thread-safety
+build --copt=-Wno-error
+build --cxxopt=-Wno-error
+build --per_file_copt=".*\.m$","@-Wno-error"
+build --per_file_copt=".*\.mm$","@-Wno-error"
+build --per_file_copt=".*\.c$","@-Wno-error"
+build --per_file_copt=".*\.cpp$","@-Wno-error"

@@ -170,6 +170,7 @@ def copy_profiles_from_directory(source_path, destination_path, team_id, bundle_
         '.BroadcastUpload': 'BroadcastUpload'
     }
 
+    copied_profiles = set()
     for file_name in os.listdir(source_path):
         file_path = source_path + '/' + file_name
         if os.path.isfile(file_path):
@@ -192,9 +193,17 @@ def copy_profiles_from_directory(source_path, destination_path, team_id, bundle_
             if profile_name.startswith(team_id + '.' + bundle_id):
                 profile_base_name = profile_name[len(team_id + '.' + bundle_id):]
                 if profile_base_name in profile_name_mapping:
-                    shutil.copyfile(file_path, destination_path + '/' + profile_name_mapping[profile_base_name] + '.mobileprovision')
+                    dest_name = profile_name_mapping[profile_base_name] + '.mobileprovision'
+                    shutil.copyfile(file_path, destination_path + '/' + dest_name)
+                    copied_profiles.add(dest_name)
                 else:
                     print('Warning: skipping provisioning profile at {} with bundle_id {} (base_name {})'.format(file_path, profile_name, profile_base_name))
+
+    for file_name in os.listdir(source_path):
+        file_path = source_path + '/' + file_name
+        if os.path.isfile(file_path) and file_name.endswith('.mobileprovision'):
+            if file_name not in copied_profiles:
+                shutil.copyfile(file_path, destination_path + '/' + file_name)
 
 
 def resolve_aps_environment_from_directory(source_path, team_id, bundle_id):
@@ -224,7 +233,7 @@ def resolve_aps_environment_from_directory(source_path, team_id, bundle_id):
                         print('Provisioning profile at {} does not include an aps-environment entitlement'.format(file_path))
                         sys.exit(1)
                     return profile_dict['Entitlements']['aps-environment']
-    return None
+    return 'production'
 
 
 def copy_certificates_from_directory(source_path, destination_path):

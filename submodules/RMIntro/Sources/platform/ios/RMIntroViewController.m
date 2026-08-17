@@ -561,6 +561,16 @@ typedef enum {
     startButton.frame = CGRectMake(floor((self.view.bounds.size.width - startButtonWidth) / 2.0f), self.view.bounds.size.height - startButtonY - statusBarHeight, startButtonWidth, 50.0f);
     
     _alternativeLanguageButton.frame = CGRectMake(floor((self.view.bounds.size.width - _alternativeLanguageButton.frame.size.width) / 2.0f), CGRectGetMaxY(startButton.frame) + languageButtonOffset, _alternativeLanguageButton.frame.size.width, _alternativeLanguageButton.frame.size.height);
+
+    if (startButton != nil) {
+        [self.view bringSubviewToFront:startButton];
+    }
+    if (_alternativeLanguageButton != nil) {
+        [self.view bringSubviewToFront:_alternativeLanguageButton];
+    }
+    if (_pageControl != nil) {
+        [self.view bringSubviewToFront:_pageControl];
+    }
     
     _wrapperView.frame = CGRectMake(0, 0, self.view.bounds.size.width, self.view.bounds.size.height);
     _pageScrollView.frame=CGRectMake(0, 20, self.view.bounds.size.width, self.view.bounds.size.height - 20);
