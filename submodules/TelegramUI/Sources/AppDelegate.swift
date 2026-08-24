@@ -528,12 +528,11 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         
         let baseAppBundleId = Bundle.main.bundleIdentifier!
         let appGroupName = "group.\(baseAppBundleId)"
-        var maybeAppGroupUrl = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupName)
-        if maybeAppGroupUrl == nil {
-            let appSupportUrl = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first ?? FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-            let fallbackGroupUrl = appSupportUrl.appendingPathComponent("AppGroup")
-            try? FileManager.default.createDirectory(at: fallbackGroupUrl, withIntermediateDirectories: true, attributes: nil)
-            maybeAppGroupUrl = fallbackGroupUrl
+        let maybeAppGroupUrl = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupName)
+        if let appGroupUrl = maybeAppGroupUrl {
+            NSLog("[AppGroup] resolved %@ to %@", appGroupName, appGroupUrl.path)
+        } else {
+            NSLog("[AppGroup] failed to resolve %@ for bundle %@", appGroupName, baseAppBundleId)
         }
         
         let buildConfig = BuildConfig(baseAppBundleId: baseAppBundleId)
@@ -633,8 +632,17 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         }, autolockDeadine: autolockDeadine, encryptionProvider: OpenSSLEncryptionProvider(), deviceModelName: nil, useBetaFeatures: !buildConfig.isAppStoreBuild, isICloudEnabled: buildConfig.isICloudEnabled)
         
         guard let appGroupUrl = maybeAppGroupUrl else {
-            self.mainWindow?.presentNative(UIAlertController(title: nil, message: "Error 2", preferredStyle: .alert))
+            self.mainWindow?.presentNative(UIAlertController(title: nil, message: "Unable to access the shared App Group container (\(appGroupName)). Please verify the installed build's signing entitlements.", preferredStyle: .alert))
             return true
+        }
+
+        let appGroupProbeUrl = appGroupUrl.appendingPathComponent(".teamgram-app-group-probe")
+        let appBuild = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "unknown"
+        do {
+            try "bundle=\(baseAppBundleId)\nbuild=\(appBuild)\n".write(to: appGroupProbeUrl, atomically: true, encoding: .utf8)
+            NSLog("[AppGroup] probe write succeeded at %@", appGroupProbeUrl.path)
+        } catch {
+            NSLog("[AppGroup] probe write failed at %@: %@", appGroupProbeUrl.path, String(describing: error))
         }
         
         var isDebugConfiguration = false
